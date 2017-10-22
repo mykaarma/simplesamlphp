@@ -186,9 +186,10 @@ class HTTP
         echo '<html xmlns="http://www.w3.org/1999/xhtml">'."\n";
         echo "  <head>\n";
         echo '    <meta http-equiv="content-type" content="text/html; charset=utf-8">'."\n";
+        echo '    <meta http-equiv="refresh" content="0;URL=\''.htmlspecialchars($url).'\'">'."\n";
         echo "    <title>Redirect</title>\n";
         echo "  </head>\n";
-        echo "  <body onload=\"window.location.replace('".htmlspecialchars($url)."');\">\n";
+        echo "  <body>\n";
         echo "    <h1>Redirect</h1>\n";
         echo '      <p>You were redirected to: <a id="redirlink" href="'.htmlspecialchars($url).'">';
         echo htmlspecialchars($url)."</a>\n";
@@ -324,6 +325,10 @@ class HTTP
             return '';
         }
         $url = self::normalizeURL($url);
+
+        if (filter_var($url, FILTER_VALIDATE_URL) === false) {
+            throw new \SimpleSAML_Error_Exception('Invalid URL: '.$url);
+        }
 
         // get the white list of domains
         if ($trustedSites === null) {
@@ -773,15 +778,26 @@ class HTTP
              *   directory of SimpleSAMLphp, the URI does not contain its relative path, and $uri_pos is false.
              *
              * It doesn't matter which one of those cases we have. We just know we can't apply our base URL to the
-             * current URI, so we need to build it back from the PHP environment.
+             * current URI, so we need to build it back from the PHP environment, unless we have a base URL specified
+             * for this case in the configuration. First, check if that's the case.
              */
-            $protocol = 'http';
-            $protocol .= (self::getServerHTTPS()) ? 's' : '';
-            $protocol .= '://';
 
-            $hostname = self::getServerHost();
-            $port = self::getServerPort();
-            return $protocol.$hostname.$port.$_SERVER['REQUEST_URI'];
+            /** @var \SimpleSAML_Configuration $appcfg */
+            $appcfg = $cfg->getConfigItem('application', null);
+            $appurl = ($appcfg instanceof \SimpleSAML_Configuration) ? $appcfg->getString('baseURL', '') : '';
+            if (!empty($appurl)) {
+                $protocol = parse_url($appurl, PHP_URL_SCHEME);
+                $hostname = parse_url($appurl, PHP_URL_HOST);
+                $port = parse_url($appurl, PHP_URL_PORT);
+                $port = !empty($port) ? ':'.$port : '';
+
+            } else { // no base URL specified for app, just use the current URL
+                $protocol = 'http';
+                $protocol .= (self::getServerHTTPS()) ? 's' : '';
+                $hostname = self::getServerHost();
+                $port = self::getServerPort();
+            }
+            return $protocol.'://'.$hostname.$port.$_SERVER['REQUEST_URI'];
         }
 
         return self::getBaseURL().$rel_path.substr($_SERVER['REQUEST_URI'], $uri_pos + strlen($url_path));

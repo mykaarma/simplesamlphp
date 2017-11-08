@@ -127,14 +127,14 @@ class sspmod_metarefresh_MetaLoader {
 		foreach($entities as $entity) {
 
 			if(isset($source['blacklist'])) {
-				if(!empty($source['blacklist']) && in_array($entity->getEntityID(), $source['blacklist'])) {
+				if(!empty($source['blacklist']) && in_array($entity->getEntityID(), $source['blacklist'], true)) {
 					SimpleSAML\Logger::info('Skipping "' .  $entity->getEntityID() . '" - blacklisted.' . "\n");
 					continue;
 				}
 			}
 
 			if(isset($source['whitelist'])) {
-				if(!empty($source['whitelist']) && !in_array($entity->getEntityID(), $source['whitelist'])) {
+				if(!empty($source['whitelist']) && !in_array($entity->getEntityID(), $source['whitelist'], true)) {
 					SimpleSAML\Logger::info('Skipping "' .  $entity->getEntityID() . '" - not in the whitelist.' . "\n");
 					continue;
 				}
@@ -357,16 +357,16 @@ class sspmod_metarefresh_MetaLoader {
 	/**
 	 * This function writes the metadata to an ARP file
 	 */
-	function writeARPfile($config) {
+	public function writeARPfile($config) {
 		
-		assert('is_a($config, \'SimpleSAML_Configuration\')');
+		assert($config instanceof SimpleSAML_Configuration);
 		
 		$arpfile = $config->getValue('arpfile');
 		$types = array('saml20-sp-remote');
 		
 		$md = array();
 		foreach($this->metadata as $category => $elements) {
-			if (!in_array($category, $types)) continue;
+			if (!in_array($category, $types, true)) continue;
 			$md = array_merge($md, $elements);
 		}
 		
@@ -389,7 +389,7 @@ class sspmod_metarefresh_MetaLoader {
 	/**
 	 * This function writes the metadata to to separate files in the output directory.
 	 */
-	function writeMetadataFiles($outputDir) {
+	public function writeMetadataFiles($outputDir) {
 	
 		while(strlen($outputDir) > 0 && $outputDir[strlen($outputDir) - 1] === '/') {
 			$outputDir = substr($outputDir, 0, strlen($outputDir) - 1);
@@ -440,7 +440,7 @@ class sspmod_metarefresh_MetaLoader {
 	 * @param string $outputDir  The directory we should save the metadata to.
 	 */
 	public function writeMetadataSerialize($outputDir) {
-		assert('is_string($outputDir)');
+		assert(is_string($outputDir));
 
 		$metaHandler = new SimpleSAML_Metadata_MetaDataStorageHandlerSerialize(array('directory' => $outputDir));
 

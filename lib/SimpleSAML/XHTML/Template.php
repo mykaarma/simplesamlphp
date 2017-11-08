@@ -247,6 +247,7 @@ class SimpleSAML_XHTML_Template
         }
         $twig->addGlobal('queryParams', $queryParams);
         $twig->addGlobal('templateId', str_replace('.twig', '', $this->normalizeTemplateName($this->template)));
+        $twig->addGlobal('isProduction', $this->configuration->getBoolean('production', true));
 
         // add a filter for translations out of arrays
         $twig->addFilter(
@@ -451,7 +452,7 @@ class SimpleSAML_XHTML_Template
      */
     private function findTemplatePath($template, $throw_exception = true)
     {
-        assert('is_string($template)');
+        assert(is_string($template));
 
         list($templateModule, $templateName) = $this->findModuleAndTemplateName($template);
         $templateModule = ($templateModule !== null) ? $templateModule : 'default';

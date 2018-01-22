@@ -1,7 +1,7 @@
 <?php
-/* 
+/*
  * The configuration of SimpleSAMLphp
- * 
+ *
  */
 
 $config = array(
@@ -19,7 +19,6 @@ $config = array(
      * baseurlpath is a *URL path* (not a filesystem path).
      * A valid format for 'baseurlpath' is:
      * [(http|https)://(hostname|fqdn)[:port]]/[path/to/simplesaml/]
-     * (note that it must end with a '/')
      *
      * The full url format is useful if your SimpleSAMLphp setup is hosted behind
      * a reverse proxy. In that case you can specify the external url here.
@@ -61,7 +60,7 @@ $config = array(
      * - 'temdir': Saving temporary files. SimpleSAMLphp will attempt to create
      *   this directory if it doesn't exist.
      * When specified as a relative path, this is relative to the SimpleSAMLphp
-     * root directory. 
+     * root directory.
      */
     'certdir' => 'cert/',
     'loggingdir' => 'log/',
@@ -378,6 +377,7 @@ $config = array(
      */
     'database.username' => 'simplesamlphp',
     'database.password' => 'secret',
+    'database.options' => array(),
 
     /*
      * (Optional) Table prefix
@@ -1038,7 +1038,7 @@ $config = array(
     'metadata.sign.privatekey' => null,
     'metadata.sign.privatekey_pass' => null,
     'metadata.sign.certificate' => null,
-
+    'metadata.sign.algorithm' => null,
 
 
     /****************************

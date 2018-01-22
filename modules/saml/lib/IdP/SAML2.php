@@ -1,7 +1,7 @@
 <?php
 
-
 use RobRichards\XMLSecLibs\XMLSecurityKey;
+use SAML2\SOAP;
 
 /**
  * IdP implementation for SAML 2.0 protocol.
@@ -258,6 +258,9 @@ class sspmod_saml_IdP_SAML2
         if ($idpMetadata->getBoolean('saml20.hok.assertion', false)) {
             $supportedBindings[] = \SAML2\Constants::BINDING_HOK_SSO;
         }
+        if ($idpMetadata->getBoolean('saml20.ecp', false)) {
+            $supportedBindings[] = \SAML2\Constants::BINDING_PAOS;
+        }
 
         if (isset($_REQUEST['spentityid'])) {
             /* IdP initiated authentication. */
@@ -305,6 +308,7 @@ class sspmod_saml_IdP_SAML2
             $extensions = null;
             $allowCreate = true;
             $authnContext = null;
+            $binding = null;
 
             $idpInit = true;
 
@@ -428,9 +432,25 @@ class sspmod_saml_IdP_SAML2
             'saml:RequestedAuthnContext'  => $authnContext,
         );
 
+        // ECP AuthnRequests need to supply credentials
+        if ($binding instanceof SOAP) {
+            self::processSOAPAuthnRequest($state);
+        }
+
         $idp->handleAuthenticationRequest($state);
     }
 
+    public static function processSOAPAuthnRequest(array &$state)
+    {
+        if (!isset($_SERVER['PHP_AUTH_USER']) || !isset($_SERVER['PHP_AUTH_PW'])) {
+            SimpleSAML_Logger::error("ECP AuthnRequest did not contain Basic Authentication header");
+            // TODO Throw some sort of ECP-specific exception / convert this to SOAP fault
+            throw new SimpleSAML_Error_Error("WRONGUSERPASS");
+        }
+
+        $state['core:auth:username'] = $_SERVER['PHP_AUTH_USER'];
+        $state['core:auth:password'] = $_SERVER['PHP_AUTH_PW'];
+    }
 
     /**
      * Send a logout request to a given association.
@@ -663,7 +683,7 @@ class sspmod_saml_IdP_SAML2
      * Calculate the NameID value that should be used.
      *
      * @param SimpleSAML_Configuration $idpMetadata The metadata of the IdP.
-     * @param SimpleSAML_Configuration $dstMetadata The metadata of the SP.
+     * @param SimpleSAML_Configuration $spMetadata The metadata of the SP.
      * @param array                    &$state The authentication state of the user.
      *
      * @return string  The NameID value.
@@ -1053,20 +1073,28 @@ class sspmod_saml_IdP_SAML2
             $key->loadKey($sharedKey);
         } else {
             $keys = $spMetadata->getPublicKeys('encryption', true);
-            $key = $keys[0];
-            switch ($key['type']) {
-                case 'X509Certificate':
-                    $pemKey = "-----BEGIN CERTIFICATE-----\n".
-                        chunk_split($key['X509Certificate'], 64).
-                        "-----END CERTIFICATE-----\n";
-                    break;
-                default:
-                    throw new SimpleSAML_Error_Exception('Unsupported encryption key type: '.$key['type']);
-            }
+            if (!empty($keys)) {
+                $key = $keys[0];
+                switch ($key['type']) {
+                    case 'X509Certificate':
+                        $pemKey = "-----BEGIN CERTIFICATE-----\n".
+                            chunk_split($key['X509Certificate'], 64).
+                            "-----END CERTIFICATE-----\n";
+                        break;
+                    default:
+                        throw new SimpleSAML_Error_Exception('Unsupported encryption key type: '.$key['type']);
+                }
 
-            // extract the public key from the certificate for encryption
-            $key = new XMLSecurityKey(XMLSecurityKey::RSA_OAEP_MGF1P, array('type' => 'public'));
-            $key->loadKey($pemKey);
+                // extract the public key from the certificate for encryption
+                $key = new XMLSecurityKey(XMLSecurityKey::RSA_OAEP_MGF1P, array('type' => 'public'));
+                $key->loadKey($pemKey);
+            } else {
+                throw new SimpleSAML_Error_ConfigurationError(
+                    'Missing encryption key for entity `' . $spMetadata->getString('entityid') . '`',
+                    null,
+                    $spMetadata->getString('metadata-set') . '.php'
+                );
+            }
         }
 
         $ea = new \SAML2\EncryptedAssertion();

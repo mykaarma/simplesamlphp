@@ -53,10 +53,8 @@ class SimpleSAML_Auth_LDAP
      * @param int $port
      * @param bool $referrals
      */
-    // TODO: Flesh out documentation
     public function __construct($hostname, $enable_tls = true, $debug = false, $timeout = 0, $port = 389, $referrals = true)
     {
-
         // Debug
         SimpleSAML\Logger::debug('Library - LDAP __construct(): Setup LDAP with ' .
                         'host=\'' . $hostname .
@@ -107,7 +105,7 @@ class SimpleSAML_Auth_LDAP
         }
 
         // Enable TLS, if needed
-        if (stripos($hostname, "ldaps:") === false and $enable_tls) {
+        if (stripos($hostname, "ldaps:") === false && $enable_tls) {
             if (!@ldap_start_tls($this->ldap)) {
                 throw $this->makeException('Library - LDAP __construct(): Unable to force TLS', ERR_INTERNAL);
             }
@@ -207,7 +205,7 @@ class SimpleSAML_Auth_LDAP
     {
         // Create the search filter
         $attribute = self::escape_filter_value($attribute, false);
-        $value = self::escape_filter_value($value);
+        $value = self::escape_filter_value($value, true);
         $filter = '';
         foreach ($attribute as $attr) {
             $filter .= '(' . $attr . '=' . $value. ')';
@@ -221,8 +219,7 @@ class SimpleSAML_Auth_LDAP
 
         // Search using generated filter
         SimpleSAML\Logger::debug('Library - LDAP search(): Searching base \'' . $base . '\' for \'' . $filter . '\'');
-        // TODO: Should aliases be dereferenced?
-        $result = @ldap_search($this->ldap, $base, $filter, array(), 0, 0, $this->timeout);
+        $result = @ldap_search($this->ldap, $base, $filter, array(), 0, 0, $this->timeout, LDAP_DEREF_NEVER);
         if ($result === false) {
             throw $this->makeException('Library - LDAP search(): Failed search on base \'' . $base . '\' for \'' . $filter . '\'');
         }
@@ -249,7 +246,6 @@ class SimpleSAML_Auth_LDAP
         if ($dn === false) {
             throw $this->makeException('Library - LDAP search(): Unable to get DN after searching base \'' . $base . '\' for \'' . $filter . '\'');
         }
-        // FIXME: Are we now sure, if no excepton has been thrown, that we are returning a DN?
         return $dn;
     }
 
@@ -266,6 +262,8 @@ class SimpleSAML_Auth_LDAP
      * @param bool $allowZeroHits
      * Determines if the method will throw an exception if no hits are found.
      * Defaults to FALSE.
+     * @param string|null $searchFilter
+     * Additional searchFilter to be added to the (attribute=value) filter
      * @return string
      * The DN of the matching element, if found. If no element was found and
      * $allowZeroHits is set to FALSE, an exception will be thrown; otherwise
@@ -281,7 +279,6 @@ class SimpleSAML_Auth_LDAP
     {
         // Traverse all search bases, returning DN if found
         $bases = SimpleSAML\Utils\Arrays::arrayize($base);
-        $result = null;
         foreach ($bases as $current) {
             try {
                 // Single base search
@@ -304,7 +301,7 @@ class SimpleSAML_Auth_LDAP
         } else {
             // Zero hits not allowed
             throw $this->makeException('Library - LDAP searchfordn(): LDAP search returned zero entries for filter \'(' .
-                $attribute . ' = ' . $value . ')\' on base(s) \'(' . join(' & ', $bases) . ')\'', 2);
+                join(' | ', $attribute) . ' = ' . $value . ')\' on base(s) \'(' . join(' & ', $bases) . ')\'', 2);
         }
     }
 
@@ -427,8 +424,6 @@ class SimpleSAML_Auth_LDAP
      */
     public function bind($dn, $password, array $sasl_args = null)
     {
-        $authz_id = null;
-
         if ($sasl_args != null) {
             if (!function_exists('ldap_sasl_bind')) {
                 $ex_msg = 'Library - missing SASL support';
@@ -594,12 +589,11 @@ class SimpleSAML_Auth_LDAP
     /**
      * Enter description here...
      *
-     * @param string $config
+     * @param array $config
      * @param string $username
      * @param string $password
      * @return array|bool
      */
-    // TODO: Documentation; only cleared up exception/log messages
     public function validate($config, $username, $password = null)
     {
         /* Escape any characters with a special meaning in LDAP. The following
@@ -645,15 +639,13 @@ class SimpleSAML_Auth_LDAP
      * backslash followed by two hex digits representing the hexadecimal value of the character.
      *
      * @static
-     * @param array $values Array of values to escape
+     * @param string|array $values Array of values to escape
      * @return array Array $values, but escaped
      */
     public static function escape_filter_value($values = array(), $singleValue = true)
     {
         // Parameter validation
-        if (!is_array($values)) {
-            $values = array($values);
-        }
+        $values = \SimpleSAML\Utils\Arrays::arrayize($values);
 
         foreach ($values as $key => $val) {
             // Escaping of filter meta characters
@@ -737,7 +729,6 @@ class SimpleSAML_Auth_LDAP
     public function whoami($searchBase, $searchAttributes)
     {
         $authz_id = '';
-
         if (function_exists('ldap_exop_whoami')) {
             if (version_compare(phpversion(), '7', '<')) {
                 if (ldap_exop_whoami($this->ldap, $authz_id) !== true) {

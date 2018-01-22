@@ -9,7 +9,6 @@
  */
 class SimpleSAML_Configuration implements \SimpleSAML\Utils\ClearableState
 {
-
     /**
      * A default value which means that the given option is required.
      *
@@ -93,7 +92,6 @@ class SimpleSAML_Configuration implements \SimpleSAML\Utils\ClearableState
         $this->configuration = $config;
         $this->location = $location;
     }
-
 
     /**
      * Load the given configuration file.
@@ -1294,7 +1292,7 @@ class SimpleSAML_Configuration implements \SimpleSAML\Utils\ClearableState
      * @param string $prefix The prefix which should be used when reading from the metadata
      *                       array. Defaults to ''.
      *
-     * @return array|null Public key data, or null if no public key or was found.
+     * @return array Public key data, or empty array if no public key or was found.
      *
      * @throws Exception If the certificate or public key cannot be loaded from a file.
      * @throws SimpleSAML_Error_Exception If the file does not contain a valid PEM-encoded certificate, or there is no
@@ -1317,9 +1315,7 @@ class SimpleSAML_Configuration implements \SimpleSAML\Utils\ClearableState
                 }
                 $ret[] = $key;
             }
-            if (!empty($ret)) {
-                return $ret;
-            }
+            return $ret;
         } elseif ($this->hasValue($prefix.'certData')) {
             $certData = $this->getString($prefix.'certData');
             $certData = preg_replace('/\s+/', '', $certData);
@@ -1357,12 +1353,10 @@ class SimpleSAML_Configuration implements \SimpleSAML\Utils\ClearableState
                     'X509Certificate' => $certData,
                 ),
             );
-        }
-
-        if ($required) {
+        } elseif ($required === true) {
             throw new SimpleSAML_Error_Exception($this->location.': Missing certificate in metadata.');
         } else {
-            return null;
+            return array();
         }
     }
 

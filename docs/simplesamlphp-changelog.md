@@ -6,6 +6,45 @@ SimpleSAMLphp changelog
 This document lists the changes between versions of SimpleSAMLphp.
 See the upgrade notes for specific information about upgrading.
 
+## Version 1.16.0
+
+Released TBD
+
+### New features
+  * Added support for SAML "Enhanced Client or Proxy" (ECP) protocol,
+    IdP side with HTTP Basic Authentcation as authentication method.
+    See the [ECP IdP documentation](./simplesamlphp-ecp-idp) for details.
+  * New option `sendmail_from`, the from address for email sent by SSP.
+  * New option `options` for PDO database connections, e.g. for TLS setup.
+
+### authfacebook
+  * Compatibility with Facebook strict URI match.
+
+### core
+  * StatisticsWithAttribute: add `passive-` prefix when logging passive
+    requests, set new option `skipPassive` to skip logging these altogether.
+  * Replace deprecated create_function with an anonymous function.
+
+### Oauth
+  * Make module HTTP proxy-aware.
+  * Remove unused demo app.
+
+### Sqlauth
+  * Changed from default-enabled to default-disabled.
+
+## Version 1.15.1
+
+Released 2018-01-12
+
+### Bug fixes
+  * AuthX509 error messages were broken.
+  * Properly calculate supported protocols based on config.
+  * NameIDAttribute filter: update to use SAML2\XML\saml\NameID.
+  * Replace remaining uses of SimpleSAML_Logger with namespace version.
+  * Statistics: prevent mixed content errors.
+  * Add 'no-store' to the cache-control header to avoid Chrome
+    caching redirects.
+
 ## Version 1.15.0
 
 Released 2017-11-20
@@ -133,6 +172,12 @@ Released 2017-11-20
 
 ### `sqlauth`
   * Fixed SQL schema for usergroups table.
+
+## Version 1.14.17
+
+Released 2017-10-25
+
+  * Resolved a security issue with the SAML 1.1 Service Provider. See [SSPSA 201710-01](https://simplesamlphp.org/security/201710-01).
 
 ## Version 1.14.16
 

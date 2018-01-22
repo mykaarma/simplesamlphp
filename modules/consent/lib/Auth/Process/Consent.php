@@ -11,7 +11,6 @@
  */
 class sspmod_consent_Auth_Process_Consent extends SimpleSAML_Auth_ProcessingFilter
 {
-
     /**
      * Button to receive focus
      *
@@ -36,7 +35,7 @@ class sspmod_consent_Auth_Process_Consent extends SimpleSAML_Auth_ProcessingFilt
     /**
      * Consent backend storage configuration
      *
-     * @var array
+     * @var sspmod_consent_Store|null
      */
     private $_store = null;
 
@@ -289,12 +288,12 @@ class sspmod_consent_Auth_Process_Consent extends SimpleSAML_Auth_ProcessingFilt
             try {
                 if ($this->_store->hasConsent($userId, $targetedId, $attributeSet)) {
                     // Consent already given
-                    SimpleSAML\Logger::stats('Consent: Consent found');
+                    SimpleSAML\Logger::stats('consent found');
                     SimpleSAML_Stats::log('consent:found', $statsData);
                     return;
                 }
 
-                SimpleSAML\Logger::stats('Consent: Consent notfound');
+                SimpleSAML\Logger::stats('consent notfound');
                 SimpleSAML_Stats::log('consent:notfound', $statsData);
 
                 $state['consent:store'] = $this->_store;
@@ -303,11 +302,11 @@ class sspmod_consent_Auth_Process_Consent extends SimpleSAML_Auth_ProcessingFilt
                 $state['consent:store.attributeSet'] = $attributeSet;
             } catch (Exception $e) {
                 SimpleSAML\Logger::error('Consent: Error reading from storage: '.$e->getMessage());
-                SimpleSAML\Logger::stats('Consent: Failed');
+                SimpleSAML\Logger::stats('Ccnsent failed');
                 SimpleSAML_Stats::log('consent:failed', $statsData);
             }
         } else {
-            SimpleSAML\Logger::stats('Consent: No storage');
+            SimpleSAML\Logger::stats('consent nostorage');
             SimpleSAML_Stats::log('consent:nostorage', $statsData);
         }
 
@@ -320,7 +319,10 @@ class sspmod_consent_Auth_Process_Consent extends SimpleSAML_Auth_ProcessingFilt
         // user interaction necessary. Throw exception on isPassive request
         if (isset($state['isPassive']) && $state['isPassive'] === true) {
             SimpleSAML_Stats::log('consent:nopassive', $statsData);
-            throw new SimpleSAML_Error_NoPassive('Unable to give consent on passive request.');
+            throw new SimpleSAML\Module\saml\Error\NoPassive(
+                    \SAML2\Constants::STATUS_REQUESTER,
+                    'Unable to give consent on passive request.'
+            );
         }
 
         // Save state and redirect
@@ -372,7 +374,6 @@ class sspmod_consent_Auth_Process_Consent extends SimpleSAML_Auth_ProcessingFilt
      */
     public static function getAttributeHash($attributes, $includeValues = false)
     {
-        $hashBase = null;
         if ($includeValues) {
             ksort($attributes);
             $hashBase = serialize($attributes);

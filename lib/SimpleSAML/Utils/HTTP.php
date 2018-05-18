@@ -417,7 +417,7 @@ class HTTP
             }
             $proxy_auth = $config->getString('proxy.auth', false);
             if ($proxy_auth !== false) {
-                $context['http']['header'] = "Proxy-Authorization: Basic".base64_encode($proxy_auth);
+                $context['http']['header'] = "Proxy-Authorization: Basic ".base64_encode($proxy_auth);
             }
             if (!isset($context['http']['request_fulluri'])) {
                 $context['http']['request_fulluri'] = true;
@@ -599,8 +599,7 @@ class HTTP
         if (preg_match('#^https?://.*/?$#D', $baseURL, $matches)) {
             // full URL in baseurlpath, override local server values
             return rtrim($baseURL, '/').'/';
-        } elseif (
-            (preg_match('#^/?([^/]?.*/)$#D', $baseURL, $matches)) ||
+        } elseif ((preg_match('#^/?([^/]?.*/)$#D', $baseURL, $matches)) ||
             (preg_match('#^\*(.*)/$#D', $baseURL, $matches)) ||
             ($baseURL === '')
         ) {
@@ -796,7 +795,6 @@ class HTTP
                 $hostname = parse_url($appurl, PHP_URL_HOST);
                 $port = parse_url($appurl, PHP_URL_PORT);
                 $port = !empty($port) ? ':'.$port : '';
-
             } else { // no base URL specified for app, just use the current URL
                 $protocol = 'http';
                 $protocol .= (self::getServerHTTPS()) ? 's' : '';
@@ -968,7 +966,7 @@ class HTTP
 
     /**
      * This function redirects to the specified URL after performing the appropriate security checks on it.
-     * Particularly, it will make sure that the provided URL is allowed by the 'redirect.trustedsites' directive in the
+     * Particularly, it will make sure that the provided URL is allowed by the 'trusted.url.domains' directive in the
      * configuration.
      *
      * If the aforementioned option is not set or the URL does correspond to a trusted site, it performs a redirection

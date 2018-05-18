@@ -10,15 +10,19 @@ See the upgrade notes for specific information about upgrading.
 
 Released TBD
 
+### Changes
+  * Renamed class `SimpleSAML_Error_BadUserInnput` to `SimpleSAML_Error_BadUserInput`
+
 ### New features
   * Added support for SAML "Enhanced Client or Proxy" (ECP) protocol,
     IdP side with HTTP Basic Authentcation as authentication method.
     See the [ECP IdP documentation](./simplesamlphp-ecp-idp) for details.
   * New option `sendmail_from`, the from address for email sent by SSP.
   * New option `options` for PDO database connections, e.g. for TLS setup.
+  * New option `search.scope` for LDAP authsources
 
-### authfacebook
-  * Compatibility with Facebook strict URI match.
+### consent
+  * Sort attribute values for consent.
 
 ### core
   * StatisticsWithAttribute: add `passive-` prefix when logging passive
@@ -31,6 +35,37 @@ Released TBD
 
 ### Sqlauth
   * Changed from default-enabled to default-disabled.
+
+## Version 1.15.4
+
+Released 2018-03-02
+
+  * Resolved a security issue related to signature validation in the SAML2 library. See [SSPSA 201803-01](https://simplesamlphp.org/security/201803-01).
+
+## Version 1.15.3
+
+Released 2018-02-27
+
+  * Resolved a security issue related to signature validation in the SAML2 library. See [SSPSA 201802-01](https://simplesamlphp.org/security/201802-01).
+  * Fixed edge-case scenario where an application uses one of the known LoggingHandlers' name as a defined class
+  * Fixed issue #793 in the PHP logging handler.
+
+## Version 1.15.2
+
+Released 2018-01-31
+
+  * Resolved a Denial of Service security issue when validating timestamps in the SAML2 library. See [SSPSA 201801-01](https://simplesamlphp.org/security/201801-01).
+  * Resolved a security issue with the open redirect protection mechanism. See [SSPSA 201801-02](https://simplesamlphp.org/security/201801-02).
+  * Fix _undefined method_ error when using memcacheD.
+
+### `authfacebook`
+  * Fix compatibility with Facebook strict URI match.
+
+### `consent`
+  * Fix statistics not being gathered.
+
+### `sqlauth`
+  * Prevented a security issue with the connection charset used for MySQL backends. See [SSPSA 201801-03](https://simplesamlphp.org/security/201801-03).
 
 ## Version 1.15.1
 
